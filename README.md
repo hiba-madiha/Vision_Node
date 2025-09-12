@@ -1,7 +1,5 @@
 ## 📚 Documentation
 
-See the [YOLOv5 Docs](https://docs.ultralytics.com/yolov5/) for full documentation on training, testing, and deployment. See below for quickstart examples.
-
 <details open>
 <summary>Install</summary>
 
@@ -22,6 +20,14 @@ cd yolov5
 
 # Install required packages
 pip install -r requirements.txt
+```
+
+```bash
+# activate the environment
+source my_env/bin/activate
+
+# Run the Program
+python test_app6.py --weights yolov5n-int8.tflite --source (IP of camera) -- classes 0 1 2 3 
 ```
 
 </details>
