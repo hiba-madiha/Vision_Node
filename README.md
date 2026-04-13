@@ -10,7 +10,6 @@ Clone the repository and install dependencies in a [**Python>=3.8.0**](https://w
 pip install ultralytics
 ```
 
-
 ```bash
 # Clone the YOLOv5 repository
 git clone https://github.com/ultralytics/yolov5
@@ -27,7 +26,7 @@ pip install -r requirements.txt
 source my_env/bin/activate
 
 # Run the Program
-python test_app6.py --weights yolov5n-int8.tflite --source (IP of camera) -- classes 0 1 2 3 
+python test_app6.py --weights yolov5n-int8.tflite --source (IP of camera) -- classes 0 1 2 3
 ```
 
 </details>
