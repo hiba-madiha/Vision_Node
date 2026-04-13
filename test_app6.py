@@ -10,12 +10,12 @@ from pathlib import Path
 
 import torch
 import uvicorn
-from digi.xbee.devices import RemoteXBeeDevice, XBeeDevice, XBee64BitAddress, XBeeException
+from digi.xbee.devices import RemoteXBeeDevice, XBee64BitAddress, XBeeDevice, XBeeException
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pymongo import MongoClient  # noqa: F401  # (left for future use)
-
 from ultralytics.utils.plotting import Annotator, colors
+
 from models.common import DetectMultiBackend
 from utils.dataloaders import (
     IMG_FORMATS,
@@ -38,7 +38,7 @@ from utils.general import (
 from utils.torch_utils import select_device, smart_inference_mode
 
 # ─────────────────────────────────────────────────────────────────────────────
-# FastAPI initialisation
+# FastAPI initialization
 # ─────────────────────────────────────────────────────────────────────────────
 app = FastAPI()
 
@@ -51,13 +51,13 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 # ─────────────────────────────────────────────────────────────────────────────
 # ZigBee / transmission configuration (tweak as needed)
 # ─────────────────────────────────────────────────────────────────────────────
-XBEE_PORT = "/dev/ttyUSB0"               # change to COM3 on Windows e.g. "COM3"
-XBEE_BAUD = 115200                       # must match coordinator
-REMOTE_64BIT = "0013A200422A4D2A"        # coordinator 64-bit address (change if needed)
-CHUNK_SIZE = 60                          # number of base64 chars per chunk (ascii-safe)
-ACK_TIMEOUT = 0.5                        # seconds to wait for ACK from coordinator
-MAX_RETRIES = 3                          # retries per chunk if no ACK received
-LABEL_SLEEP = 0.1                        # small pause after sending label/start/end
+XBEE_PORT = "/dev/ttyUSB0"  # change to COM3 on Windows e.g. "COM3"
+XBEE_BAUD = 115200  # must match coordinator
+REMOTE_64BIT = "0013A200422A4D2A"  # coordinator 64-bit address (change if needed)
+CHUNK_SIZE = 60  # number of base64 chars per chunk (ascii-safe)
+ACK_TIMEOUT = 0.5  # seconds to wait for ACK from coordinator
+MAX_RETRIES = 3  # retries per chunk if no ACK received
+LABEL_SLEEP = 0.1  # small pause after sending label/start/end
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Globals & configuration (unchanged)
@@ -76,13 +76,13 @@ video_count = 1
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper: wait for ACK from coordinator
 # ─────────────────────────────────────────────────────────────────────────────
 def _wait_for_ack(xbee_device: XBeeDevice, frame_id: int, chunk_id: int, timeout: float):
-    """
-    Wait for an ACK message in the format: "ACK|<frame_id>|<chunk_id>"
-    Returns True if ACK received, False on timeout.
+    """Wait for an ACK message in the format: "ACK|<frame_id>|<chunk_id>" Returns True if ACK received, False on
+    timeout.
     """
     end_time = time.time() + timeout
     while time.time() < end_time:
@@ -116,10 +116,8 @@ def _wait_for_ack(xbee_device: XBeeDevice, frame_id: int, chunk_id: int, timeout
 # Robust sender: base64-encode JPEG, chunk it, send with ACKs
 # ─────────────────────────────────────────────────────────────────────────────
 def _send_image_over_zigbee(img_path: str, label: str):
-    """
-    Send label + JPEG image over ZigBee with chunk IDs and frame ID, base64-encoded.
-    Uses stop-and-wait ACK per chunk. Coordinator must reply with:
-        ACK|<frame_id>|<chunk_id>
+    """Send label + JPEG image over ZigBee with chunk IDs and frame ID, base64-encoded. Uses stop-and-wait ACK per
+    chunk. Coordinator must reply with: ACK|<frame_id>|<chunk_id>.
     """
     xbee = None
     try:
@@ -250,7 +248,11 @@ def run(
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
 
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))
-    seen, windows, dt = 0, [], (Profile(device=torch_device), Profile(device=torch_device), Profile(device=torch_device))
+    seen, windows, dt = (
+        0,
+        [],
+        (Profile(device=torch_device), Profile(device=torch_device), Profile(device=torch_device)),
+    )
 
     for path, im, im0s, vid_cap, s in dataset:
         with dt[0]:
@@ -268,10 +270,10 @@ def run(
         for i, det in enumerate(pred):
             seen += 1
             if webcam:
-                p, im0, frame = path[i], im0s[i].copy(), dataset.count
+                p, im0, _frame = path[i], im0s[i].copy(), dataset.count
                 s += f"{i}: "
             else:
-                p, im0, frame = path, im0s.copy(), getattr(dataset, "frame", 0)
+                p, im0, _frame = path, im0s.copy(), getattr(dataset, "frame", 0)
 
             p = Path(p)
             s += "{:g}x{:g} ".format(*im.shape[2:])
@@ -319,9 +321,7 @@ def run(
                 if not ret:
                     continue
                 frame_bytes = buffer.tobytes()
-                yield (
-                    b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-                )
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
 
             if video_stream_ondemand == 1 and video_stream_24Hours == 0:
                 if len(det) > 0:
@@ -339,9 +339,7 @@ def run(
                     if not ret:
                         continue
                     frame_bytes = buffer.tobytes()
-                    yield (
-                        b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-                    )
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
                     if time.time() - last_detection_time > video_duration:
                         out.release()
                         is_recording = False
@@ -358,9 +356,7 @@ def run(
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
 
-        LOGGER.info(
-            f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1e3:.1f}ms"
-        )
+        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1e3:.1f}ms")
 
     t = tuple(x.t / seen * 1e3 for x in dt)
     LOGGER.info(
